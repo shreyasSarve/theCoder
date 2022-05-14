@@ -5,10 +5,9 @@ const date = new Date("2022-05-20 09:30:00 UTC").toLocaleString("en", {
 });
 const getMeContest = async (platformName) => {
   const uri = baseURL + platformName;
-  const res = await axios
-    .get(uri)
-    .then((res) => {
-      return res.data;
+  const res = await axios.get(uri)
+    .then((r) => {
+      return r.data;
     })
     .catch((e) => console.log(e));
   const data = res;
@@ -29,6 +28,7 @@ const getMeContest = async (platformName) => {
       duration: duration,
       flag: flag,
       url: url,
+      scheduled: false,
     });
   }
   contests.sort((a, b) => {
@@ -36,9 +36,7 @@ const getMeContest = async (platformName) => {
   });
   return contests;
 };
-const sendContests=()=>{
-   
-}
+
 module.exports = {
   getMeContest,
 };
