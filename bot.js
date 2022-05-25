@@ -14,6 +14,8 @@ app.get("/", (_req, res) => {
 
 const Discord = require("discord.js");
 const { scheduleJob } = require("node-schedule");
+const { embedForContest } = require("./handlers/contest");
+const res = require("express/lib/response");
 
 const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
 
@@ -35,10 +37,9 @@ async function sayHi() {
   console.log("Bot is Online....");
 }
 const schedule = () => {
-  scheduleJob("28 2 * * *", async () => {
+  scheduleJob("04 23 * * *", async () => {
     console.log("Shedulling----");
-    fetchNewContest();
-    scheduleTodaysContests();
+    assignContests().finally(() => scheduleTodaysContests());
   });
 };
 /*------------------------ Initialization When Bot Starts --------------------------*/
@@ -48,15 +49,12 @@ const assignContests = async () => {
     const contest = await contestController.getMeContest(platForms[plat]);
     contests[plat] = contest;
   }
+  scheduleTodaysContests();
 };
 client.login(process.env.TOKEN);
 
 /*----------------------- Handlers Commands responces --------------------------*/
 client.on("messageCreate", (message) => {
-  const args = message.content.slice(prefix.length).trim().split(/ +/g);
-  const commandName = args.shift();
-  console.log(args);
-  console.log(commandName);
   if (message.content.startsWith(prefix)) {
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const commandName = args.shift();
@@ -79,43 +77,73 @@ const loadCommands = () => {
     client.commands.set(commandName, command);
   }
 };
-const fetchNewContest = async () => {
-  console.log("Fetching New Entries !!!!");
-  for (let platform in platForms) {
-    const contest = await contestController.getMeContest(platForms[platform]);
-    contest.forEach((e) => {
-      const isExist = contests[platform].find(
-        (el) => el.start_time == e.start_time
-      );
-      if (!isExist) contests[platform].push(e);
-    });
-    contests[platform].sort((a, b) => {
-      return a.start_time - b.start_time;
-    });
-  }
-};
+
+/*---------------------Schedular----------------------------*/
 const scheduleTodaysContests = () => {
+  let totalToday = 0;
   console.log("Scheduling Todays Contest !!!");
   for (const plateform in platForms) {
     const date = new Date(Date.now()).toLocaleDateString("en");
     contests[plateform].forEach((contest) => {
       const start_date = contest.start_time.toLocaleDateString("en");
       if (start_date == date) {
-        contest.scheduled=true;
-        console.log("Scheduling", contest);
+        console.log(`scheduling...${contest.name}`);
+        contest.scheduled = true;
+        totalToday++;
         const earlyReminder = new Date(contest.start_time).setMinutes(
           contest.start_time.getMinutes() - 5
         );
+        const todaysContestEmbed = embedForContest(plateform, [contest], 0);
+        channel.send({ embeds: [todaysContestEmbed] });
+
         scheduleJob(`${contest.name} Early Reminder`, earlyReminder, () => {
-          channel.log("Early Reminder");
+          channel.sendTyping();
+          setTimeout(() => earlyCallBack(plateform, contest), 1000);
         });
-        scheduleJob(`${contest.name}`, contest.start_time, () => {
-          console.log("Final Reminder!!!");
-          const index = contests[plateform].indexOf(contest);
-          contests[plateform].splice(index, 1);
-          console.log("Deleted !!!!");
+        scheduleJob(`${contest.name} Live Reminder`, contest.start_time, () => {
+          channel.sendTyping();
+          setTimeout(() => liveCallBack(plateform, contest), 2000);
+        });
+        scheduleJob(`${contest.name} Ended Reminder`, contest.end_time, () => {
+          channel.sendTyping();
+          setTimeout(() => endedCallBack(plateform, contest), 2000);
         });
       }
     });
   }
+
+  if (totalToday == 0) {
+    const embed = {
+      color: "#00FF00",
+      title: `No Contests Today`,
+      author: {
+        name: `The Coder`,
+      },
+      fields: [],
+      description: "No Contests Today Enjoy ",
+      timestamp: new Date(),
+      footer: {
+        text: "Happy Coding guys !!!!",
+      },
+    };
+    channel.send({ embeds: [embed] });
+  }
+};
+/*-------------CallBacks----------------------------*/
+const earlyCallBack = (plateform, contest) => {
+  console.log("Message Send !!!");
+  channel.sendTyping();
+  const earlyEmbed = embedForContest(plateform, [contest], 3);
+  channel.send({ embeds: [earlyEmbed] });
+};
+const liveCallBack = (plateform, contest) => {
+  channel.sendTyping();
+  const liveEmbed = embedForContest(plateform, [contest], 4);
+  channel.send({ embeds: [liveEmbed] });
+};
+const endedCallBack = (plateform, contest) => {
+  channel.send(`>>> **${contest.name}** \nEnded \n✊✊✊`);
+  const index = contests[plateform].indexOf(contest);
+  contests[plateform].splice(index, 1);
+  console.log("Deleted !!!!");
 };

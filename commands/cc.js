@@ -3,7 +3,7 @@ const { getTodaysContest } = require("../handlers/helper");
 const { contests, platForms } = require("../shared");
 
 module.exports.run = (_client, message, args) => {
-  const platform = "cf";
+  const platform = "cc";
   console.log(`Iside ${platform}-----------`);
   let contest = contests[platform];
   let option = 1;

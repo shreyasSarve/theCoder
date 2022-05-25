@@ -48,7 +48,9 @@ const discription = [
   "Todays Contests",
   "Upcoming Contests",
   "Sorry No Contests Today",
+  "Early Reminder for Todays Contest ⏰",
+  "Contest is Live Now 💥",
+  "Contest Ended ✊",
 ];
-
 
 module.exports = { platformDetails: platformsDetails, discription };
