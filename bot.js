@@ -37,7 +37,7 @@ async function sayHi() {
   console.log("Bot is Online....");
 }
 const schedule = () => {
-  scheduleJob("04 23 * * *", async () => {
+  scheduleJob("30 1 * * *", async () => {
     console.log("Shedulling----");
     assignContests().finally(() => scheduleTodaysContests());
   });
