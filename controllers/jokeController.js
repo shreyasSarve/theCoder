@@ -1,8 +1,10 @@
-const fetch = require("node-fetch");
+const { default: axios } = require("axios");
+const fetch = require("axios");
 const url = "https://v2.jokeapi.dev/joke/Any?type=twopart";
 const getMeJoke = async () => {
-  const res = await fetch(url);
-  return res.json();
+  return axios.get(url).then((val) => {
+    return val.data;
+  });
 };
 
 module.exports = {

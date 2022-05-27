@@ -5,11 +5,12 @@ const date = new Date("2022-05-20 09:30:00 UTC").toLocaleString("en", {
 });
 const getMeContest = async (platformName) => {
   const uri = baseURL + platformName;
-  const res = await axios.get(uri)
+  const res = await axios
+    .get(uri)
     .then((r) => {
       return r.data;
     })
-    .catch((e) => console.log(e));
+    .catch((e) => console.log("error Occured", e));
   const data = res;
   let contests = new Array();
   for (let contest of data) {
